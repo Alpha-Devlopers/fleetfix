@@ -1,0 +1,153 @@
+### FleetFix Backend — Sample API Requests
+### Base URL
+@baseUrl = http://localhost:8080
+
+### 1. Register a dispatcher
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "username": "jane.dispatcher",
+  "email": "jane@fleetfix.com",
+  "password": "SecurePass123",
+  "role": "DISPATCHER"
+}
+
+### Sample response
+# {
+#   "success": true,
+#   "message": "User registered successfully",
+#   "data": {
+#     "userId": 1,
+#     "username": "jane.dispatcher",
+#     "email": "jane@fleetfix.com",
+#     "role": "DISPATCHER",
+#     "token": "eyJhbGciOi...",
+#     "tokenType": "Bearer"
+#   }
+# }
+
+### 2. Login
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "jane.dispatcher",
+  "password": "SecurePass123"
+}
+
+### 3. Add a vehicle (requires Bearer token)
+POST {{baseUrl}}/api/vehicles
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "registrationNumber": "FL-2026-001",
+  "manufacturer": "Ford",
+  "model": "Transit",
+  "year": 2022,
+  "mileage": 34210.5,
+  "status": "ACTIVE"
+}
+
+### 4. List vehicles (paginated)
+GET {{baseUrl}}/api/vehicles?page=0&size=10&sort=registrationNumber,asc
+Authorization: Bearer {{token}}
+
+### 5. Add a driver
+POST {{baseUrl}}/api/drivers
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "name": "Mike Rodriguez",
+  "phone": "+1-555-0199",
+  "licenseNumber": "DL-99231"
+}
+
+### 6. Assign a vehicle to a driver
+POST {{baseUrl}}/api/drivers/1/assign-vehicle
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "vehicleId": 1
+}
+
+### 7. Save a GPS coordinate (Tracking module)
+POST {{baseUrl}}/api/tracking/location
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "vehicleId": 1,
+  "latitude": 37.7749,
+  "longitude": -122.4194,
+  "speed": 42.5,
+  "heading": 180
+}
+
+### 8. Get current vehicle location
+GET {{baseUrl}}/api/tracking/1/current
+Authorization: Bearer {{token}}
+
+### 9. Submit a diagnostic trouble code (DTC) — supplied manually by frontend
+POST {{baseUrl}}/api/diagnostics
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "vehicleId": 1,
+  "dtcCode": "P0301",
+  "description": "Cylinder 1 misfire detected",
+  "severity": "HIGH"
+}
+
+### 10. Create a repair order
+POST {{baseUrl}}/api/repair-orders
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "vehicleId": 1,
+  "diagnosticId": 1,
+  "estimatedCompletion": "2026-08-01"
+}
+
+### 11. Update repair order status
+PATCH {{baseUrl}}/api/repair-orders/1/status
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "status": "IN_PROGRESS"
+}
+
+### 12. Add a spare part to inventory
+POST {{baseUrl}}/api/inventory
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "partNumber": "BRK-PAD-04",
+  "partName": "Brake Pad Set",
+  "quantity": 50,
+  "warehouseLocation": "Aisle 3, Shelf B"
+}
+
+### 13. Reserve parts
+POST {{baseUrl}}/api/inventory/1/reserve
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "quantity": 4
+}
+
+### 14. Dashboard stats
+GET {{baseUrl}}/api/dashboard/stats
+Authorization: Bearer {{token}}
+
+### 15. Vehicle report
+GET {{baseUrl}}/api/reports/vehicles
+Authorization: Bearer {{token}}
