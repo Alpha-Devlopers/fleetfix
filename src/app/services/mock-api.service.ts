@@ -39,7 +39,21 @@ export interface Vehicle {
   nextMaintenance: string;
   image: string;
   manufacturingYear?: number;
+  location?: string;
+  maintenanceStatus?: string;
+  engineHealth?: string;
+  insurancePolicy?: string;
+  insuranceProvider?: string;
+  insuranceValidity?: string;
+  rcNumber?: string;
+  rcOwnerName?: string;
+  rcRegistrationDate?: string;
+  rcValidity?: string;
+  permitDocUrl?: string;
+  fitnessDocUrl?: string;
+  emissionDocUrl?: string;
 }
+
 
 export interface ServiceRecord {
   id: string;
@@ -181,6 +195,12 @@ export interface Invoice {
 export class MockApiService {
   private readonly delayTime = 300;
 
+  private userPasswords = new Map<string, string>([
+    ['admin@fleetfix.com', 'admin123'],
+    ['owner@fleetfix.com', 'owner123'],
+    ['garage@fleetfix.com', 'garage123']
+  ]);
+
   // --- Image Pools ---
   private readonly uniquePortraits = [
     'photo-1607990283143-e81e7a2c93ab', 'photo-1624561172888-ac93c696e10c', 'photo-1615813967515-e1838c1c5116',
@@ -286,6 +306,22 @@ export class MockApiService {
   constructor() {
     this.generateIndianLogisticsDummyData();
 
+    // Initialize localStorage user database tables if not existing
+    this.loadUsers();
+    this.loadPasswords();
+
+    // Restore JWT session on start
+    const token = localStorage.getItem('jwt_token');
+    if (token) {
+      const email = localStorage.getItem('jwt_user_email') || '';
+      const user = this.loadUsers().find(u => u.email.toLowerCase() === email.toLowerCase());
+      if (user) {
+        this.currentUserSubject.next(user);
+      } else {
+        this.logout().subscribe();
+      }
+    }
+
     // Movement Simulation
     setInterval(() => {
       const current = this.vehicles$.value;
@@ -321,45 +357,11 @@ export class MockApiService {
   // --- Dynamic Model-to-Image Helper ---
   getVehicleImageForModel(model: string, index: number = 0): string {
     const cleanModel = model.toLowerCase();
-    
-    // Curated high-res Unsplash photo IDs for exact commercial classes:
-    const primaIds = ['photo-1601584115197-04ecc0da31d7', 'photo-1501700490688-4095bfa61002']; // Tata Prima Heavy Lorries
-    const signaIds = ['photo-1586528116311-ad8dd3c8310d', 'photo-1590674899484-d5640e854abe']; // Tata Signa Lorries
-    const leylandIds = ['photo-1519003722824-192514ab9e92', 'photo-1542838132-92c53300491e']; // Ashok Leyland Goods Carriers
-    const benzIds = ['photo-1580674684081-7617fbf3d745', 'photo-1566576721346-d4a3b4ea35bc']; // BharatBenz Dump Lorries
-    const eicherTruckIds = ['photo-1592838064575-70ed626d3a44', 'photo-1606208427954-ff853c396657']; // Eicher Pro Lorries
-    const blazoIds = ['photo-1578328819058-b69f3a3b0f6b', 'photo-1503376780353-7e6692767b70']; // Mahindra Blazo Carriers
-    const aceIds = ['photo-1516576224476-6fa44a7b6c0b', 'photo-1559136555-9303baea8ebd']; // Tata Ace Gold Mini Cargo
-    const dostIds = ['photo-1582268611958-ebfd161ef9cf', 'photo-1527262275122-c1590eab8664']; // Ashok Leyland Dost
-    const boleroIds = ['photo-1599819811279-d5ad9cccf838', 'photo-1580674271209-4004d98b4a7d']; // Mahindra Bolero Pickups
-    const travellerIds = ['photo-1610448721566-47369c768e70', 'photo-1542838132-92c53300491e']; // Force Traveller Passenger Van
-    const eicherBusIds = ['photo-1544620347-c4fd4a3d5957', 'photo-1616422285623-13ff0162193c']; // Eicher Transit Bus
-    const benzBusIds = ['photo-1532601224476-15c79f2f7a51', 'photo-1563986768609-322da13575f3']; // BharatBenz Luxury Bus
-
-    let pool = primaIds;
-    if (cleanModel.includes('prima')) pool = primaIds;
-    else if (cleanModel.includes('signa')) pool = signaIds;
-    else if (cleanModel.includes('2820') || cleanModel.includes('leyland')) pool = leylandIds;
-    else if (cleanModel.includes('3528') || cleanModel.includes('benz') || cleanModel.includes('bharatbenz')) {
-      if (cleanModel.includes('bus')) pool = benzBusIds;
-      else pool = benzIds;
-    }
-    else if (cleanModel.includes('eicher')) {
-      if (cleanModel.includes('bus')) pool = eicherBusIds;
-      else pool = eicherTruckIds;
-    }
-    else if (cleanModel.includes('blazo') || cleanModel.includes('mahindra')) {
-      if (cleanModel.includes('pickup') || cleanModel.includes('bolero')) pool = boleroIds;
-      else pool = blazoIds;
-    }
-    else if (cleanModel.includes('ace')) pool = aceIds;
-    else if (cleanModel.includes('dost')) pool = dostIds;
-    else if (cleanModel.includes('bolero') || cleanModel.includes('pickup')) pool = boleroIds;
-    else if (cleanModel.includes('traveller')) pool = travellerIds;
-    else if (cleanModel.includes('bus')) pool = eicherBusIds;
-
-    const photoId = pool[index % pool.length];
-    return `https://images.unsplash.com/${photoId}?w=600&h=400&fit=crop`;
+    if (cleanModel.includes('eicher')) return '/images/vehicles/eicher_pro_6016.png';
+    if (cleanModel.includes('signa') || cleanModel.includes('tata')) return '/images/vehicles/tata_signa_4018.png';
+    if (cleanModel.includes('2820') || cleanModel.includes('leyland')) return '/images/vehicles/ashok_leyland_2820.png';
+    if (cleanModel.includes('3528') || cleanModel.includes('benz') || cleanModel.includes('bharatbenz')) return '/images/vehicles/bharatbenz_3528.png';
+    return '/images/vehicles/eicher_pro_6016.png';
   }
 
   // --- Database Generator ---
@@ -381,122 +383,155 @@ export class MockApiService {
       this.adminUsers.push(`${this.getRandomItem(this.indianFirstNames)} ${this.getRandomItem(this.indianLastNames)}`);
     }
 
-    // 4. Generate 50 Drivers with unique realistic portrait photos
+    // 4. Generate 4 Drivers with unique realistic portrait photos
     const driversList: Driver[] = [];
-    const usedNames = new Set<string>();
+    const driverDetails = [
+      { id: 'd-201', name: 'Sai Kiran', phone: '+91 9012345678', avatarUrl: '/images/drivers/sai_kiran.png', status: 'On Trip' as const, rating: 4.8 },
+      { id: 'd-202', name: 'Venkatesh Reddy', phone: '+91 9876543210', avatarUrl: '/images/drivers/venkatesh_reddy.png', status: 'On Trip' as const, rating: 4.6 },
+      { id: 'd-203', name: 'Ravi Teja', phone: '+91 9345678901', avatarUrl: '/images/drivers/ravi_teja.png', status: 'Off Duty' as const, rating: 4.2 },
+      { id: 'd-204', name: 'Mahesh Reddy', phone: '+91 9988776655', avatarUrl: '/images/drivers/mahesh_reddy.png', status: 'On Trip' as const, rating: 4.9 }
+    ];
 
-    for (let i = 1; i <= 50; i++) {
-      let driverName = '';
-      do {
-        driverName = `${this.getRandomItem(this.indianFirstNames)} ${this.getRandomItem(this.indianLastNames)}`;
-      } while (usedNames.has(driverName));
-      usedNames.add(driverName);
-
-      const dId = `d-${200 + i}`;
-      const phoneDigits = Math.floor(6000000000 + Math.random() * 3999999999);
-      const licenseState = this.getRandomItem(['MH', 'KA', 'DL', 'TN', 'AP', 'TS', 'KL', 'HR']);
-      const experience = Math.floor(3 + Math.random() * 18);
-      const status: Driver['status'] = i <= 25 ? 'On Trip' : (i <= 42 ? 'Available' : 'Off Duty');
-      
-      // Grab unique portrait ID from our pool
-      const photoId = this.uniquePortraits[i - 1];
-      const avatarUrl = `https://images.unsplash.com/${photoId}?w=150&h=150&fit=crop&crop=face`;
-
+    for (let i = 0; i < 4; i++) {
+      const details = driverDetails[i];
+      const licenseState = i % 2 === 0 ? 'AP' : 'TS';
+      const experience = 5 + (i * 3);
       driversList.push({
-        id: dId,
-        name: driverName,
-        phone: `+91 ${phoneDigits}`,
-        email: `${driverName.toLowerCase().replace(/\s+/g, '.')}@fleetfix.com`,
+        id: details.id,
+        name: details.name,
+        phone: details.phone,
+        email: `${details.name.toLowerCase().replace(/\s+/g, '.')}@fleetfix.com`,
         licenseNo: `DL-${licenseState}${100000 + i}`,
         experience,
-        salary: Math.floor(25000 + Math.random() * 25000), // INR
-        status,
-        rating: Number((4.0 + Math.random() * 1.0).toFixed(1)),
-        joinDate: `202${Math.floor(1 + Math.random() * 5)}-0${Math.floor(1 + Math.random() * 9)}-12`,
-        avatarUrl
+        salary: 28000 + (i * 4000), // INR
+        status: details.status === 'On Trip' ? 'On Trip' : (details.status === 'Off Duty' ? 'Off Duty' : 'Available'),
+        rating: details.rating,
+        joinDate: `2024-0${3 + i}-15`,
+        avatarUrl: details.avatarUrl
       });
     }
     this.drivers$.next(driversList);
 
-    // 5. Generate 50 Vehicles with model-matching commercial images
+    // 5. Generate 4 Vehicles with model-matching commercial images
     const vehiclesList: Vehicle[] = [];
-    const states = ['MH', 'KA', 'DL', 'TN', 'AP', 'TS', 'KL', 'HR'];
-
-    for (let i = 1; i <= 50; i++) {
-      const vId = `v-${100 + i}`;
-      const model = this.vehicleModelPool[i % this.vehicleModelPool.length];
-      const state = states[i % states.length];
-      const district = String(Math.floor(1 + Math.random() * 24)).padStart(2, '0');
-      const series = String.fromCharCode(65 + (i % 26)) + String.fromCharCode(65 + ((i + 3) % 26));
-      const numbers = String(Math.floor(1000 + Math.random() * 8999));
-      const plate = `${state}${district}${series}${numbers}`;
-
-      // Determine vehicle type
-      let type: Vehicle['type'] = 'Truck';
-      if (model.includes('Bus')) {
-        type = 'Trailer';
-      } else if (model.includes('Dost') || model.includes('Pickup') || model.includes('Gold') || model.includes('Traveller')) {
-        type = 'Van';
+    const vehicleSpecs = [
+      {
+        id: 'v-101',
+        model: 'Eicher Pro 6016',
+        plate: 'AP39TX4587',
+        image: '/images/vehicles/eicher_pro_6016.png',
+        location: 'Visakhapatnam',
+        latitude: 17.6868,
+        longitude: 83.2185,
+        status: 'Running' as const,
+        fuelLevel: 82,
+        health: 95,
+        engineHealth: 'Healthy',
+        maintenanceStatus: 'Not Required',
+        lastService: '2026-06-15',
+        nextMaintenance: '2026-10-20',
+        odometer: 48500,
+        temp: 85
+      },
+      {
+        id: 'v-102',
+        model: 'Tata Signa 4018',
+        plate: 'TS09AB6721',
+        image: '/images/vehicles/tata_signa_4018.png',
+        location: 'Hyderabad',
+        latitude: 17.3850,
+        longitude: 78.4867,
+        status: 'Running' as const,
+        fuelLevel: 75,
+        health: 88,
+        engineHealth: 'Healthy',
+        maintenanceStatus: 'Due in 15 Days',
+        lastService: '2026-05-10',
+        nextMaintenance: '2026-08-05',
+        odometer: 104200,
+        temp: 90
+      },
+      {
+        id: 'v-103',
+        model: 'Ashok Leyland 2820',
+        plate: 'AP16CD9870',
+        image: '/images/vehicles/ashok_leyland_2820.png',
+        location: 'Vijayawada',
+        latitude: 16.5062,
+        longitude: 80.6480,
+        status: 'Maintenance' as const,
+        fuelLevel: 40,
+        health: 60,
+        engineHealth: 'Oil Service Required',
+        maintenanceStatus: 'In Progress',
+        lastService: '2026-02-28',
+        nextMaintenance: '2026-07-25',
+        odometer: 185300,
+        temp: 105
+      },
+      {
+        id: 'v-104',
+        model: 'BharatBenz 3528',
+        plate: 'TS11GH2456',
+        image: '/images/vehicles/bharatbenz_3528.png',
+        location: 'Warangal',
+        latitude: 17.9784,
+        longitude: 79.5941,
+        status: 'Running' as const,
+        fuelLevel: 91,
+        health: 98,
+        engineHealth: 'Excellent',
+        maintenanceStatus: 'Completed',
+        lastService: '2026-07-15',
+        nextMaintenance: '2026-11-15',
+        odometer: 24600,
+        temp: 82
       }
+    ];
 
-      // Link driver
-      const driver = driversList[i - 1];
-      let status: Vehicle['status'] = 'Idle';
+    for (let i = 0; i < 4; i++) {
+      const spec = vehicleSpecs[i];
+      const driver = driversList[i];
       if (driver) {
-        if (driver.status === 'On Trip') {
-          status = 'Running';
-          driver.assignedVehicleId = vId;
-          driver.assignedVehiclePlate = plate;
-        } else if (driver.status === 'Available') {
-          status = 'Idle';
-          driver.assignedVehicleId = vId;
-          driver.assignedVehiclePlate = plate;
-        }
+        driver.assignedVehicleId = spec.id;
+        driver.assignedVehiclePlate = spec.plate;
       }
-
-      if (i === 3 || i === 12 || i === 25) {
-        status = 'Maintenance';
-        if (driver) driver.status = 'Off Duty';
-      }
-      if (i === 45) {
-        status = 'Out of Service';
-        if (driver) driver.status = 'Off Duty';
-      }
-
-      const city = this.getRandomItem(this.indianCities);
-      const fuelLevel = Math.floor(15 + Math.random() * 80);
-      const health = status === 'Maintenance' ? Math.floor(35 + Math.random() * 25) : (status === 'Out of Service' ? 24 : Math.floor(82 + Math.random() * 18));
-      const currentSpeed = status === 'Running' ? Math.floor(55 + Math.random() * 25) : 0;
-      const engineStatus = status === 'Running' ? 'Active' : 'Inactive';
-      const lastService = `2026-0${Math.floor(1 + Math.random() * 6)}-15`;
-      const nextMaintenance = `2026-0${Math.floor(7 + Math.random() * 5)}-20`;
-
-      // Grab model matching vehicle ID from our pool
-      const image = this.getVehicleImageForModel(model, i);
-
       vehiclesList.push({
-        id: vId,
-        plate,
-        model,
-        type,
-        status,
-        health,
-        odometer: Math.floor(25000 + Math.random() * 280000),
-        fuelLevel,
-        engineTemp: status === 'Running' ? Math.floor(88 + Math.random() * 15) : 80,
-        currentSpeed,
-        engineStatus,
-        company: this.getRandomItem(this.indianLogisticsCompanies),
+        id: spec.id,
+        plate: spec.plate,
+        model: spec.model,
+        type: 'Truck',
+        status: spec.status,
+        health: spec.health,
+        odometer: spec.odometer,
+        fuelLevel: spec.fuelLevel,
+        engineTemp: spec.temp,
+        currentSpeed: spec.status === 'Running' ? 65 + (i * 4) : 0,
+        engineStatus: spec.status === 'Running' ? 'Active' : 'Inactive',
+        company: 'Safexpress India Logistics',
         driverId: driver?.id,
         driverName: driver?.name,
         driverPhone: driver?.phone,
         driverPhoto: driver?.avatarUrl,
-        latitude: city.lat + (Math.random() - 0.5) * 0.15,
-        longitude: city.lng + (Math.random() - 0.5) * 0.15,
-        lastService,
-        nextMaintenance,
-        image,
-        manufacturingYear: 2018 + (i % 7)
+        latitude: spec.latitude,
+        longitude: spec.longitude,
+        lastService: spec.lastService,
+        nextMaintenance: spec.nextMaintenance,
+        image: spec.image,
+        manufacturingYear: 2021 + i,
+        location: spec.location,
+        maintenanceStatus: spec.maintenanceStatus,
+        engineHealth: spec.engineHealth,
+        insurancePolicy: `INS-${spec.plate}-9087`,
+        insuranceProvider: 'HDFC Ergo General Insurance',
+        insuranceValidity: '2027-03-31',
+        rcNumber: `RC-${spec.plate}-8877`,
+        rcOwnerName: 'Safexpress India Logistics',
+        rcRegistrationDate: `202${1 + i}-04-12`,
+        rcValidity: `203${6 + i}-04-11`,
+        permitDocUrl: `/documents/permit-${spec.id}.pdf`,
+        fitnessDocUrl: `/documents/fitness-${spec.id}.pdf`,
+        emissionDocUrl: `/documents/emission-${spec.id}.pdf`
       });
     }
     this.vehicles$.next(vehiclesList);
@@ -700,134 +735,318 @@ export class MockApiService {
     this.users$.next(users);
   }
 
+  private hashPassword(password: string): string {
+    let hash = 0;
+    for (let i = 0; i < password.length; i++) {
+      const char = password.charCodeAt(i);
+      hash = (hash << 5) - hash + char;
+      hash |= 0;
+    }
+    return 'enc_' + Math.abs(hash).toString(16);
+  }
+
+  private loadUsers(): User[] {
+    const raw = localStorage.getItem('ff_users');
+    if (raw) {
+      return JSON.parse(raw);
+    }
+    // Seed default users
+    const defaultUsers: User[] = [
+      { id: 'user-owner', email: 'owner@fleetfix.com', name: 'Sai Kiran', role: 'fleet-owner', company: 'Visakhapatnam Logistics', phone: '+91 9876543210', notificationsEnabled: true, theme: 'glass', status: 'Active', avatarUrl: '/images/drivers/sai_kiran.png' },
+      { id: 'user-admin', email: 'admin@fleetfix.com', name: 'Venkatesh Reddy', role: 'admin', company: 'System Fleet Operations', phone: '+91 9000000002', notificationsEnabled: true, theme: 'glass', status: 'Active', avatarUrl: '/images/drivers/venkatesh_reddy.png' },
+      { id: 'user-shop', email: 'garage@fleetfix.com', name: 'Mahesh Reddy', role: 'service-center', company: 'Raju Garage Centers', phone: '+91 9000000003', notificationsEnabled: true, theme: 'glass', status: 'Active', avatarUrl: '/images/drivers/mahesh_reddy.png' },
+      { id: 'user-ravi', email: 'ravi@fleetfix.com', name: 'Ravi Teja', role: 'fleet-owner', company: 'Ravi Transport', phone: '+91 9000000004', notificationsEnabled: true, theme: 'glass', status: 'Active', avatarUrl: '/images/drivers/ravi_teja.png' }
+    ];
+    localStorage.setItem('ff_users', JSON.stringify(defaultUsers));
+    return defaultUsers;
+  }
+
+  private saveUsers(users: User[]): void {
+    localStorage.setItem('ff_users', JSON.stringify(users));
+  }
+
+  private loadPasswords(): Record<string, string> {
+    const raw = localStorage.getItem('ff_passwords');
+    if (raw) {
+      return JSON.parse(raw);
+    }
+    // Seed default passwords (pre-hashed)
+    const defaultPasswords: Record<string, string> = {
+      'owner@fleetfix.com': this.hashPassword('owner123'),
+      'admin@fleetfix.com': this.hashPassword('admin123'),
+      'garage@fleetfix.com': this.hashPassword('garage123'),
+      'ravi@fleetfix.com': this.hashPassword('ravi123')
+    };
+    localStorage.setItem('ff_passwords', JSON.stringify(defaultPasswords));
+    return defaultPasswords;
+  }
+
+  private savePasswords(passwords: Record<string, string>): void {
+    localStorage.setItem('ff_passwords', JSON.stringify(passwords));
+  }
+
+  private loadOtps(): Record<string, { code: string; expiry: number }> {
+    const raw = localStorage.getItem('ff_otps');
+    return raw ? JSON.parse(raw) : {};
+  }
+
+  private saveOtps(otps: Record<string, { code: string; expiry: number }>): void {
+    localStorage.setItem('ff_otps', JSON.stringify(otps));
+  }
+
   // --- Auth Actions ---
   login(email: string, password: string): Observable<User> {
-    if (email && password) {
-      // Check database users
-      const match = this.users$.value.find(u => u.email.toLowerCase() === email.toLowerCase());
-      if (match) {
-        if (match.role === 'service-center' && match.status === 'Pending') {
-          return throwError(() => new Error('Your service center account is Pending approval by Admin.'));
-        }
-        if (match.status === 'Blocked') {
-          return throwError(() => new Error('Your account is Blocked. Contact Administrator.'));
-        }
-        this.currentUserSubject.next(match);
-        return of(match).pipe(delay(this.delayTime));
-      }
+    const users = this.loadUsers();
+    const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
 
-      // Default fallback mapper if user registers on the fly
-      let role: User['role'] = 'fleet-owner';
-      let name = 'Rahul Sharma';
-      let comp = 'Fleet Owner Logistics';
-      
-      if (email.toLowerCase().includes('admin')) {
-        role = 'admin';
-        name = 'Sarah Connor';
-      } else if (email.toLowerCase().includes('garage') || email.toLowerCase().includes('shop')) {
-        role = 'service-center';
-        name = 'Sanjay Patel';
-        comp = 'Apex Service Center';
-      }
-
-      const mockUser: User = {
-        id: `user-${Date.now().toString().slice(-4)}`,
-        email: email,
-        name: name,
-        role: role,
-        company: comp,
-        phone: '+91 9876543210',
-        notificationsEnabled: true,
-        theme: 'glass',
-        status: 'Active'
-      };
-
-      // save to db
-      this.users$.next([...this.users$.value, mockUser]);
-      this.currentUserSubject.next(mockUser);
-      return of(mockUser).pipe(delay(this.delayTime));
+    if (!user) {
+      return throwError(() => new Error('Invalid Email: Provided email address does not exist in FleetFix database.'));
     }
-    return throwError(() => new Error('Email and password required'));
+
+    const passwords = this.loadPasswords();
+    if (passwords[email.toLowerCase()] !== this.hashPassword(password)) {
+      return throwError(() => new Error('Incorrect Password: The password you entered is incorrect.'));
+    }
+
+    if (user.status === 'Blocked') {
+      return throwError(() => new Error('Account Disabled: Your account has been suspended by the administrator.'));
+    }
+
+    if (user.status === 'Pending') {
+      localStorage.setItem('verification_email', user.email);
+      return throwError(() => new Error('Email Not Verified: Please verify your email OTP first.'));
+    }
+
+    // Success login
+    localStorage.setItem('jwt_token', 'mock_jwt_token_' + Date.now());
+    localStorage.setItem('jwt_user_id', user.id);
+    localStorage.setItem('jwt_user_email', user.email);
+    localStorage.setItem('jwt_user_name', user.name);
+    localStorage.setItem('jwt_user_role', user.role);
+    localStorage.setItem('jwt_user_avatar', user.avatarUrl || '');
+
+    this.currentUserSubject.next(user);
+    return of(user).pipe(delay(this.delayTime));
   }
 
   register(email: string, name: string, role: User['role'] = 'fleet-owner', additionalFields?: any): Observable<boolean> {
+    const users = this.loadUsers();
+    
+    // Check duplicates
+    if (users.some(u => u.email.toLowerCase() === email.toLowerCase())) {
+      return throwError(() => new Error('Email Already Exists: A user with this email address is already registered.'));
+    }
+
+    if (additionalFields?.phone && users.some(u => u.phone === additionalFields.phone)) {
+      return throwError(() => new Error('Phone Number Already Exists: A user with this phone number is already registered.'));
+    }
+
+    // Create new pending user
     const newUser: User = {
       id: `user-${Date.now().toString().slice(-4)}`,
       email,
       name,
       role,
-      phone: additionalFields?.phone || '+91 9000000000',
-      company: additionalFields?.company || (role === 'service-center' ? additionalFields?.garageName : 'Owner Logistics'),
+      phone: additionalFields?.phone || '',
+      company: additionalFields?.address || '',
+      avatarUrl: '/images/drivers/sai_kiran.png',
       notificationsEnabled: true,
       theme: 'glass',
-      status: role === 'service-center' ? 'Pending' : 'Active'
+      status: 'Pending'
     };
 
-    // If Service Center, register a Garage profile as well!
-    if (role === 'service-center') {
-      const newGarage: Garage = {
-        id: `g-${Date.now().toString().slice(-4)}`,
-        name: additionalFields?.garageName || `${name} Auto Hub`,
-        ownerName: name,
-        email: email,
-        phone: additionalFields?.phone || '+91 9000000000',
-        state: additionalFields?.state || 'Maharashtra',
-        district: additionalFields?.district || 'Mumbai',
-        city: additionalFields?.city || 'Mumbai',
-        pincode: additionalFields?.pincode || '400001',
-        fullAddress: additionalFields?.fullAddress || 'Indian Service Road',
-        mechanicsCount: Number(additionalFields?.mechanicsCount || 3),
-        servicesOffered: additionalFields?.servicesOffered || ['General Repair', 'Brake Overhaul'],
-        workingHours: additionalFields?.workingHours || '09:00 AM - 08:00 PM',
-        capacity: Number(additionalFields?.capacity || 5),
-        status: 'Pending',
-        gstNo: additionalFields?.gstNo || '',
-        businessRegNo: additionalFields?.businessRegNo || '',
-        logoUrl: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?w=100&h=100&fit=crop',
-        imageUrl: 'https://images.unsplash.com/photo-1506015391300-4802db74de2e?w=500&h=300&fit=crop'
-      };
-      this.garages$.next([...this.garages$.value, newGarage]);
-    }
+    users.push(newUser);
+    this.saveUsers(users);
 
-    this.users$.next([...this.users$.value, newUser]);
+    const passwords = this.loadPasswords();
+    passwords[email.toLowerCase()] = this.hashPassword(additionalFields?.password || '');
+    this.savePasswords(passwords);
+
+    localStorage.setItem('verification_email', email);
+
+    // Generate active 6-digit OTP in localStorage
+    this.sendMockOtp(email);
+
+    return of(true).pipe(delay(this.delayTime));
+  }
+
+  private sendMockOtp(email: string): string {
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiry = Date.now() + 15 * 60 * 1000; // 15 mins
+
+    const otps = this.loadOtps();
+    otps[email.toLowerCase()] = { code, expiry };
+    this.saveOtps(otps);
+    return code;
+  }
+
+  getDevOtp(email?: string): Observable<string> {
+    const targetEmail = email || localStorage.getItem('verification_email') || localStorage.getItem('reset_email') || '';
+    if (!targetEmail) {
+      return throwError(() => new Error('No active email context found.'));
+    }
+    const otps = this.loadOtps();
+    const entry = otps[targetEmail.toLowerCase()];
+    if (entry && entry.code) {
+      return of(entry.code);
+    }
+    const newCode = this.sendMockOtp(targetEmail);
+    return of(newCode);
+  }
+
+  resendOtp(email?: string): Observable<boolean> {
+    const targetEmail = email || localStorage.getItem('verification_email') || localStorage.getItem('reset_email') || '';
+    if (!targetEmail) {
+      return throwError(() => new Error('Email context missing.'));
+    }
+    this.sendMockOtp(targetEmail);
     return of(true).pipe(delay(this.delayTime));
   }
 
   forgotPassword(email: string): Observable<boolean> {
+    const users = this.loadUsers();
+    const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+
+    if (!user) {
+      return throwError(() => new Error('Invalid Email: Provided email address does not exist.'));
+    }
+
+    localStorage.setItem('reset_email', email);
+    this.sendMockOtp(email);
     return of(true).pipe(delay(this.delayTime));
   }
 
   verifyEmail(code: string): Observable<boolean> {
+    const email = localStorage.getItem('verification_email') || '';
+    if (!email) {
+      return throwError(() => new Error('Session Expired: Verification email context is missing.'));
+    }
+
+    const otps = this.loadOtps();
+    const entry = otps[email.toLowerCase()];
+
+    if (!entry || entry.code !== code || Date.now() > entry.expiry) {
+      return throwError(() => new Error('Invalid OTP: The verification code is incorrect or expired.'));
+    }
+
+    // Activate user
+    const users = this.loadUsers();
+    const idx = users.findIndex(u => u.email.toLowerCase() === email.toLowerCase());
+    if (idx !== -1) {
+      users[idx].status = 'Active';
+      this.saveUsers(users);
+    }
+
+    localStorage.removeItem('verification_email');
+    delete otps[email.toLowerCase()];
+    this.saveOtps(otps);
+
     return of(true).pipe(delay(this.delayTime));
   }
 
   verifyOtp(code: string): Observable<boolean> {
+    const email = localStorage.getItem('reset_email') || '';
+    if (!email) {
+      return throwError(() => new Error('Session Expired: Reset email context is missing.'));
+    }
+
+    const otps = this.loadOtps();
+    const entry = otps[email.toLowerCase()];
+
+    if (!entry || entry.code !== code || Date.now() > entry.expiry) {
+      return throwError(() => new Error('Invalid OTP: The verification code is incorrect or expired.'));
+    }
+
+    return of(true).pipe(delay(this.delayTime));
+  }
+
+  resetPassword(otp: string, newPassword: string): Observable<boolean> {
+    const email = localStorage.getItem('reset_email') || '';
+    if (!email) {
+      return throwError(() => new Error('Session Expired: Reset email context is missing.'));
+    }
+
+    const otps = this.loadOtps();
+    const entry = otps[email.toLowerCase()];
+
+    if (!entry || entry.code !== otp || Date.now() > entry.expiry) {
+      return throwError(() => new Error('Invalid OTP: The verification code is incorrect or expired.'));
+    }
+
+    const passwords = this.loadPasswords();
+    passwords[email.toLowerCase()] = this.hashPassword(newPassword);
+    this.savePasswords(passwords);
+
+    localStorage.removeItem('reset_email');
+    delete otps[email.toLowerCase()];
+    this.saveOtps(otps);
+
     return of(true).pipe(delay(this.delayTime));
   }
 
   logout(): Observable<boolean> {
-    return of(true).pipe(
-      delay(150),
-      tap(() => this.currentUserSubject.next(null))
-    );
+    localStorage.clear();
+    this.currentUserSubject.next(null);
+    return of(true);
   }
 
-  updateProfile(name: string, phone: string, company: string): Observable<User> {
+  updateProfile(name: string, phone: string, address: string, city?: string, state?: string, pincode?: string): Observable<User> {
     const current = this.currentUserSubject.value;
-    if (current) {
-      const updated = { ...current, name, phone, company };
-      this.currentUserSubject.next(updated);
-      
-      const list = [...this.users$.value];
-      const uIdx = list.findIndex(u => u.id === current.id);
-      if (uIdx !== -1) {
-        list[uIdx] = updated;
-        this.users$.next(list);
-      }
-
-      return of(updated).pipe(delay(this.delayTime));
+    if (!current) {
+      return throwError(() => new Error('Session Expired: Please log in again.'));
     }
-    return throwError(() => new Error('No logged-in user'));
+
+    const users = this.loadUsers();
+    const idx = users.findIndex(u => u.email.toLowerCase() === current.email.toLowerCase());
+    if (idx !== -1) {
+      users[idx].name = name;
+      users[idx].phone = phone;
+      users[idx].company = address;
+      (users[idx] as any).city = city || '';
+      (users[idx] as any).state = state || '';
+      (users[idx] as any).pincode = pincode || '';
+      
+      this.saveUsers(users);
+      this.currentUserSubject.next(users[idx]);
+
+      localStorage.setItem('jwt_user_name', name);
+      return of(users[idx]).pipe(delay(this.delayTime));
+    }
+    return throwError(() => new Error('User profile not found.'));
+  }
+
+  changePassword(currentPassword: string, newPassword: string): Observable<any> {
+    const current = this.currentUserSubject.value;
+    if (!current) {
+      return throwError(() => new Error('Session Expired: Please log in again.'));
+    }
+
+    const passwords = this.loadPasswords();
+    if (passwords[current.email.toLowerCase()] !== this.hashPassword(currentPassword)) {
+      return throwError(() => new Error('Incorrect Password: The current password you entered is incorrect.'));
+    }
+
+    passwords[current.email.toLowerCase()] = this.hashPassword(newPassword);
+    this.savePasswords(passwords);
+    return of(true).pipe(delay(this.delayTime));
+  }
+
+  uploadAvatar(avatarUrl: string): Observable<User> {
+    const current = this.currentUserSubject.value;
+    if (!current) {
+      return throwError(() => new Error('Session Expired: Please log in again.'));
+    }
+
+    const users = this.loadUsers();
+    const idx = users.findIndex(u => u.email.toLowerCase() === current.email.toLowerCase());
+    if (idx !== -1) {
+      users[idx].avatarUrl = avatarUrl;
+      this.saveUsers(users);
+      this.currentUserSubject.next(users[idx]);
+      localStorage.setItem('jwt_user_avatar', avatarUrl);
+      return of(users[idx]).pipe(delay(this.delayTime));
+    }
+    return throwError(() => new Error('User profile not found.'));
   }
 
   updateSettings(theme: 'dark' | 'light' | 'glass', notificationsEnabled: boolean): Observable<User> {

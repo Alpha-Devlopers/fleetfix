@@ -16,6 +16,7 @@ import { RepairOrderComponent } from './components/repair-order.component';
 import { InventoryComponent } from './components/inventory.component';
 import { ReportsComponent } from './components/reports.component';
 import { SettingsComponent } from './components/settings.component';
+import { ProfileComponent } from './components/profile.component';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -38,6 +39,7 @@ export const routes: Routes = [
       { path: 'inventory', component: InventoryComponent },
       { path: 'reports', component: ReportsComponent },
       { path: 'settings', component: SettingsComponent },
+      { path: 'profile', component: ProfileComponent },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]
   },

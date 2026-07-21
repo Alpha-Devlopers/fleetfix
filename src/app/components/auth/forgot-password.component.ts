@@ -144,9 +144,16 @@ export class ForgotPasswordComponent implements OnInit {
   onSubmit() {
     if (this.forgotForm.valid) {
       this.isLoading.set(true);
-      this.mockApi.forgotPassword(this.forgotForm.value.email).subscribe(() => {
-        this.isLoading.set(false);
-        this.success.set(true);
+      this.mockApi.forgotPassword(this.forgotForm.value.email).subscribe({
+        next: () => {
+          this.isLoading.set(false);
+          this.success.set(true);
+          alert('Verification OTP code dispatched successfully! Please check your mailbox.');
+        },
+        error: (err) => {
+          this.isLoading.set(false);
+          alert(err.message || 'Failed to dispatch reset code.');
+        }
       });
     }
   }

@@ -1,6 +1,7 @@
 import { Component, OnInit, AfterViewInit, ViewChild, ElementRef, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Chart } from 'chart.js/auto';
+import { MockApiService } from '../services/mock-api.service';
 
 @Component({
   selector: 'app-reports',
@@ -183,13 +184,28 @@ export class ReportsComponent implements OnInit, AfterViewInit {
   exporting = signal(false);
   currentFormat = signal<'excel' | 'pdf' | null>(null);
 
+  // Dynamic Chart labels seeded from vehicles database
+  vehiclesPlates: string[] = ['AP39TX4587', 'TS09AB6721', 'AP16CD9870', 'TS11GH2456'];
+  driverNames: string[] = ['Sai Kiran', 'Venkatesh Reddy', 'Ravi Teja', 'Mahesh Reddy'];
+
   // Chart instances
   private chart1: Chart | null = null;
   private chart2: Chart | null = null;
 
-  constructor() {}
+  constructor(private mockApi: MockApiService) {}
 
-  ngOnInit() {}
+  ngOnInit() {
+    this.mockApi.getVehicles().subscribe(list => {
+      if (list.length > 0) {
+        this.vehiclesPlates = list.map(v => v.plate);
+        this.driverNames = list.map(v => v.driverName || 'Unassigned');
+        // Redraw charts dynamically if already in view
+        if (this.chartLeftRef && this.chartRightRef) {
+          this.renderCharts();
+        }
+      }
+    });
+  }
 
   ngAfterViewInit() {
     this.renderCharts();
@@ -264,10 +280,10 @@ export class ReportsComponent implements OnInit, AfterViewInit {
       this.chart1 = new Chart(ctx1, {
         type: 'bar',
         data: {
-          labels: ['John D.', 'Marcus W.', 'Kyle R.', 'Bob T.'],
+          labels: this.driverNames,
           datasets: [{
             label: 'Driver Safety Rating',
-            data: [4.8, 4.2, 4.9, 4.5],
+            data: [4.8, 4.6, 4.2, 4.9],
             backgroundColor: '#10b981'
           }]
         },
@@ -295,7 +311,7 @@ export class ReportsComponent implements OnInit, AfterViewInit {
       this.chart2 = new Chart(ctx2, {
         type: 'bar',
         data: {
-          labels: ['TX-9823', 'CA-1049', 'FL-4839', 'IL-5930'],
+          labels: this.vehiclesPlates,
           datasets: [{
             label: 'Distance (km)',
             data: [4500, 6200, 2900, 5400],
@@ -328,10 +344,10 @@ export class ReportsComponent implements OnInit, AfterViewInit {
       this.chart2 = new Chart(ctx2, {
         type: 'bar',
         data: {
-          labels: ['John D.', 'Marcus W.', 'Kyle R.', 'Bob T.'],
+          labels: this.driverNames,
           datasets: [{
             label: 'Total Distance Driven (km)',
-            data: [1250, 940, 1600, 1100],
+            data: [12500, 9400, 16000, 11000],
             backgroundColor: '#06b6d4'
           }]
         },
@@ -380,8 +396,6 @@ export class ReportsComponent implements OnInit, AfterViewInit {
     setTimeout(() => {
       this.exporting.set(false);
       this.currentFormat.set(null);
-      
-      // Simulate file download by instigating mock window alert
       alert(`Report downloaded successfully in ${format === 'excel' ? 'Excel (.xlsx)' : 'PDF (.pdf)'} format!`);
     }, 1500);
   }

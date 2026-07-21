@@ -23,7 +23,9 @@
     "@types/leaflet": "^1.9.21",
     "chart.js": "^4.5.1",
     "leaflet": "^1.9.4",
+    "ng": "^0.0.0",
     "rxjs": "~7.8.0",
+    "serve": "^14.2.6",
     "tslib": "^2.3.0"
   },
   "devDependencies": {

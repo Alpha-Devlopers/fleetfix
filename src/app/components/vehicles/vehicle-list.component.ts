@@ -27,7 +27,6 @@ import { MockApiService, Vehicle, Driver } from '../../services/mock-api.service
       </div>
       
       <div class="view-toggles flex gap-2">
-        <!-- View Toggle Buttons -->
         <button class="btn btn-secondary btn-icon-only" [class.active]="viewMode() === 'cards'" (click)="setViewMode('cards')" title="Card Grid View">
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
         </button>
@@ -36,10 +35,10 @@ import { MockApiService, Vehicle, Driver } from '../../services/mock-api.service
         </button>
       </div>
 
-      <button class="btn btn-primary" (click)="openAddModal()">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-        Add Vehicle
-      </button>
+      <div class="active-fleet-indicator glass-panel px-4 py-2 text-sm font-semibold flex items-center gap-2">
+        <span class="pulse-indicator status-running"></span>
+        Fleet: 4 Active Commercial Vehicles
+      </div>
     </div>
 
     <!-- 1. Cards Grid View (Default) -->
@@ -57,7 +56,10 @@ import { MockApiService, Vehicle, Driver } from '../../services/mock-api.service
         <!-- Card Body -->
         <div class="vehicle-card-body">
           <div class="flex justify-between items-center mb-3">
-            <h3 class="plate-number font-mono mb-0">{{ vehicle.plate }}</h3>
+            <div>
+              <h3 class="plate-number font-mono mb-1">{{ vehicle.plate }}</h3>
+              <span class="text-xs text-secondary font-display font-semibold">{{ vehicle.model }}</span>
+            </div>
             <span class="badge badge-info">{{ vehicle.type }}</span>
           </div>
 
@@ -70,6 +72,22 @@ import { MockApiService, Vehicle, Driver } from '../../services/mock-api.service
               <a href="tel:{{ vehicle.driverPhone }}" class="driver-phone-link" *ngIf="vehicle.driverPhone">
                 {{ vehicle.driverPhone }}
               </a>
+            </div>
+          </div>
+
+          <!-- Specs details -->
+          <div class="specs-grid mb-3">
+            <div class="spec-cell">
+              <span class="spec-lbl">Location</span>
+              <span class="spec-val text-cyan">{{ vehicle.location || 'Depot' }}</span>
+            </div>
+            <div class="spec-cell">
+              <span class="spec-lbl">Engine Health</span>
+              <span class="spec-val" [ngClass]="{'text-success': vehicle.engineHealth === 'Excellent' || vehicle.engineHealth === 'Healthy', 'text-danger': vehicle.engineHealth !== 'Excellent' && vehicle.engineHealth !== 'Healthy'}">{{ vehicle.engineHealth || 'Unknown' }}</span>
+            </div>
+            <div class="spec-cell" style="grid-column: span 2;">
+              <span class="spec-lbl">Maintenance Status</span>
+              <span class="spec-val" [ngClass]="{'text-success': vehicle.maintenanceStatus === 'Completed' || vehicle.maintenanceStatus === 'Not Required', 'text-warning': vehicle.maintenanceStatus === 'Due in 15 Days', 'text-danger': vehicle.maintenanceStatus === 'In Progress'}">{{ vehicle.maintenanceStatus || 'N/A' }}</span>
             </div>
           </div>
 
@@ -125,13 +143,10 @@ import { MockApiService, Vehicle, Driver } from '../../services/mock-api.service
 
         <!-- Card Actions -->
         <div class="vehicle-card-actions">
-          <button class="btn btn-secondary btn-sm" [routerLink]="['/vehicles', vehicle.id]">Service Details</button>
-          <div class="flex gap-2">
+          <button class="btn btn-primary btn-sm w-full" [routerLink]="['/vehicles', vehicle.id]">View Details</button>
+          <div class="flex gap-2" style="margin-left: 8px;">
             <button class="btn-action-icon edit" (click)="openEditModal(vehicle)" title="Edit Vehicle">
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-            </button>
-            <button class="btn-action-icon delete" (click)="deleteVehicle(vehicle.id)" title="Remove from fleet">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
             </button>
           </div>
         </div>
@@ -184,9 +199,6 @@ import { MockApiService, Vehicle, Driver } from '../../services/mock-api.service
                 </button>
                 <button class="btn-action-icon edit" (click)="openEditModal(vehicle)" title="Edit">
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-                </button>
-                <button class="btn-action-icon delete" (click)="deleteVehicle(vehicle.id)" title="Delete">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
                 </button>
               </td>
             </tr>
@@ -570,6 +582,53 @@ import { MockApiService, Vehicle, Driver } from '../../services/mock-api.service
       }
     }
     .modal-body { padding: 24px; }
+    
+    .specs-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-color);
+      padding: 10px 12px;
+      border-radius: 8px;
+    }
+    .spec-cell {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .spec-lbl {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+    .spec-val {
+      font-size: 0.825rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .active-fleet-indicator {
+      border: 1px solid var(--border-glow);
+      box-shadow: 0 0 10px var(--border-glow);
+      background: var(--bg-surface);
+      backdrop-filter: blur(8px);
+      border-radius: 8px;
+    }
+    .pulse-indicator {
+      width: 8px; height: 8px; border-radius: 50%;
+      display: inline-block;
+      &.status-running {
+        background-color: var(--color-success);
+        box-shadow: 0 0 8px var(--color-success);
+        animation: pulse 1.5s infinite;
+      }
+    }
+    @keyframes pulse {
+      0% { transform: scale(0.95); opacity: 0.5; }
+      50% { transform: scale(1.15); opacity: 1; }
+      100% { transform: scale(0.95); opacity: 0.5; }
+    }
   `]
 })
 export class VehicleListComponent implements OnInit {

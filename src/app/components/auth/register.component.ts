@@ -34,7 +34,7 @@ import { MockApiService } from '../../services/mock-api.service';
             </div>
           </div>
 
-          <div class="form-group">
+          <div class="form-group mt-3">
             <label class="form-label" for="email">Email Address</label>
             <input 
               id="email"
@@ -49,7 +49,46 @@ import { MockApiService } from '../../services/mock-api.service';
             </div>
           </div>
 
-          <div class="form-group">
+          <div class="form-group mt-3">
+            <label class="form-label" for="phone">Mobile Number</label>
+            <input 
+              id="phone"
+              type="text" 
+              class="form-control" 
+              formControlName="phone"
+              placeholder="e.g. +91 9012345678"
+              [class.invalid]="isFieldInvalid('phone')"
+            />
+            <div *ngIf="isFieldInvalid('phone')" class="form-error">
+              <span>Please enter a valid phone number (10-14 digits)</span>
+            </div>
+          </div>
+
+          <div class="form-group mt-3">
+            <label class="form-label" for="address">Address</label>
+            <input 
+              id="address"
+              type="text" 
+              class="form-control" 
+              formControlName="address"
+              placeholder="e.g. Dwaraka Nagar, Visakhapatnam"
+              [class.invalid]="isFieldInvalid('address')"
+            />
+            <div *ngIf="isFieldInvalid('address')" class="form-error">
+              <span>Address is required</span>
+            </div>
+          </div>
+
+          <div class="form-group mt-3">
+            <label class="form-label" for="role">Register As</label>
+            <select id="role" class="form-control" formControlName="role" [class.invalid]="isFieldInvalid('role')">
+              <option value="fleet-owner">Fleet Owner (Customer)</option>
+              <option value="service-center">Service Center (Shopkeeper)</option>
+              <option value="admin">Administrator (Admin)</option>
+            </select>
+          </div>
+
+          <div class="form-group mt-3">
             <label class="form-label" for="password">Password</label>
             <input 
               id="password"
@@ -144,6 +183,12 @@ import { MockApiService } from '../../services/mock-api.service';
       text-align: center;
     }
 
+    .form-error {
+      color: var(--color-danger);
+      font-size: 0.75rem;
+      margin-top: 4px;
+    }
+    
     .spinner {
       width: 20px;
       height: 20px;
@@ -171,6 +216,9 @@ export class RegisterComponent implements OnInit {
     this.registerForm = this.fb.group({
       name: ['', [Validators.required]],
       email: ['', [Validators.required, Validators.email]],
+      phone: ['', [Validators.required, Validators.pattern('^\\+?[0-9]{10,14}$')]],
+      address: ['', [Validators.required]],
+      role: ['fleet-owner', [Validators.required]],
       password: ['', [Validators.required, Validators.minLength(6)]]
     });
   }
@@ -184,13 +232,13 @@ export class RegisterComponent implements OnInit {
     if (this.registerForm.valid) {
       this.isLoading.set(true);
       this.errorMessage.set(null);
-      const { email, name } = this.registerForm.value;
+      const { email, name, role, phone, address, password } = this.registerForm.value;
 
-      this.mockApi.register(email, name, 'admin').subscribe({
+      this.mockApi.register(email, name, role, { phone, address, password }).subscribe({
         next: () => {
           this.isLoading.set(false);
-          alert('Registration successful! Please log in.');
-          this.router.navigate(['/login']);
+          alert('Registration successful! A verification code has been dispatched to your email address.');
+          this.router.navigate(['/verify-email']);
         },
         error: (err) => {
           this.isLoading.set(false);

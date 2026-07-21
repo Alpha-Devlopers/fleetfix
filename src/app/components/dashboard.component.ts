@@ -1,7 +1,7 @@
 import { Component, OnInit, signal, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { MockApiService, Vehicle, FaultAlert } from '../services/mock-api.service';
+import { MockApiService, User, Vehicle, FaultAlert } from '../services/mock-api.service';
 import { Subscription } from 'rxjs';
 import { Chart } from 'chart.js/auto';
 
@@ -11,6 +11,20 @@ import { Chart } from 'chart.js/auto';
   imports: [CommonModule, RouterModule],
   template: `
     <div class="dashboard-container">
+      <!-- Personalized Welcome Banner -->
+      <div class="glass-card welcome-banner mb-4" *ngIf="currentUser">
+        <div class="welcome-content-wrapper">
+          <img [src]="currentUser.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100'" alt="User Avatar" class="welcome-avatar" />
+          <div class="welcome-text-details">
+            <h2>Welcome, {{ currentUser.name }}</h2>
+            <p class="role-desc">Role: <span class="role-highlight">{{ getRoleLabel(currentUser.role) }}</span> | System Status: Active</p>
+          </div>
+          <div class="welcome-meta-details ml-auto text-right">
+            <span class="last-login-label">Last Login: {{ lastLoginTime }}</span>
+          </div>
+        </div>
+      </div>
+
       <!-- KPI Stats Grid -->
       <div class="grid-cols-4 mb-4">
         <div class="glass-card kpi-card">
@@ -271,6 +285,36 @@ import { Chart } from 'chart.js/auto';
       70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
       100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
     }
+
+    .welcome-banner {
+      padding: 16px 24px;
+      .welcome-content-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
+      .welcome-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid var(--color-primary);
+      }
+      .welcome-text-details {
+        h2 { font-size: 1.2rem; margin-bottom: 2px; font-family: var(--font-display); }
+        .role-desc {
+          font-size: 0.75rem;
+          color: var(--text-muted);
+          margin-bottom: 0;
+          .role-highlight { color: var(--color-primary); font-weight: 600; }
+        }
+      }
+      .welcome-meta-details {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+      }
+    }
   `]
 })
 export class DashboardComponent implements OnInit, OnDestroy {
@@ -284,13 +328,32 @@ export class DashboardComponent implements OnInit, OnDestroy {
   activeAlertsList: any[] = [];
   maintenanceList: Vehicle[] = [];
 
+  currentUser: User | null = null;
+  lastLoginTime: string = '';
+
   private sub?: Subscription;
   private mileageChartInst: Chart | null = null;
   private fuelChartInst: Chart | null = null;
 
   constructor(private mockApi: MockApiService) {}
 
+  getRoleLabel(role: string | undefined): string {
+    if (!role) return '';
+    if (role === 'fleet-owner') return 'Fleet Owner (Customer)';
+    if (role === 'service-center') return 'Service Center (Shopkeeper)';
+    if (role === 'admin') return 'System Administrator';
+    return role;
+  }
+
   ngOnInit() {
+    this.mockApi.currentUser$.subscribe(user => {
+      this.currentUser = user;
+      if (user) {
+        const now = new Date();
+        this.lastLoginTime = now.toLocaleString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true }) + ', today';
+      }
+    });
+
     this.sub = this.mockApi.getVehicles().subscribe(vehicles => {
       this.totalVehicles.set(vehicles.length);
       const running = vehicles.filter(v => v.status === 'Running').length;
