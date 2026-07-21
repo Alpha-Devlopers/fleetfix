@@ -6,10 +6,10 @@ spring:
     name: fleetfix-backend
 
   datasource:
-    url: jdbc:mysql://localhost:3306/fleetfix_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-    username: root
-    password: Santhosh@3336
-    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:postgresql://fleetfix.cbaaaqcugyzy.ap-south-1.rds.amazonaws.com:5432/postgres
+    username: postgres
+    password: vasu@1234
+    driver-class-name: org.postgresql.Driver
 
   jpa:
     hibernate:
@@ -18,7 +18,7 @@ spring:
     properties:
       hibernate:
         format_sql: true
-        dialect: org.hibernate.dialect.MySQLDialect
+        dialect: org.hibernate.dialect.PostgreSQLDialect
     open-in-view: false
 
   jackson:
