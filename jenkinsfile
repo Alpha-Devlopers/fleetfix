@@ -1,0 +1,60 @@
+pipeline {
+    agent any
+
+    triggers {
+               githubPush()
+             }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git url: 'https://github.com/Alpha-Devlopers/fleetfix.git',branch:'main'
+            }
+        }
+
+        stage('Build') {
+            steps {
+                echo 'Building project...'
+               sh 'npm install'
+               sh 'ng build'
+            }
+        }
+
+        stage('Code Analysis') {
+            environment {
+                scannerHome = tool 'SonarScanner' // SonarScanner configured in Jenkins
+            }
+            steps {
+                script {
+                    withSonarQubeEnv('Sonar') { // 'Sonar' is the name of SonarQube server in Jenkins
+                        sh """
+                           ${scannerHome}/bin/sonar-scanner \
+                          -Dsonar.projectKey=fleetfix \
+                          -Dsonar.sources=. \
+                          -Dsonar.host.url=http://13.235.104.61:9000
+
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Quality Gate') {
+            steps {
+                // Waits for SonarQube quality gate result
+                timeout(time: 1, unit: 'HOURS') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Build, analysis, and quality gate passed successfully!'
+        }
+        failure {
+            echo 'Build or SonarQube quality gate failed.'
+        }
+    }
+}
