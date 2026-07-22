@@ -30,7 +30,7 @@ export class ShellComponent implements OnInit {
     this.mockApi.currentUser$.subscribe(user => {
       this.currentUser = user;
       if (!user) {
-        this.router.navigate(['/login']);
+        this.router.navigate(['/login'], { replaceUrl: true });
       }
     });
 
@@ -68,7 +68,7 @@ export class ShellComponent implements OnInit {
 
   logout() {
     this.mockApi.logout().subscribe(() => {
-      this.router.navigate(['/login']);
+      this.router.navigate(['/login'], { replaceUrl: true });
     });
   }
 

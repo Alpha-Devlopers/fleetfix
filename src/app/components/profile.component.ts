@@ -14,7 +14,7 @@ import { MockApiService, User } from '../services/mock-api.service';
       <div class="glass-card profile-banner mb-4">
         <div class="banner-avatar-section">
           <div class="avatar-container">
-            <img [src]="user()?.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150'" alt="Avatar" class="profile-avatar" />
+            <img [src]="user()?.avatarUrl || '/images/drivers/sai_kiran.png'" alt="Avatar" class="profile-avatar" />
             <button class="btn-avatar-edit" (click)="toggleAvatarSelector()" title="Change Avatar">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
             </button>
@@ -411,12 +411,10 @@ export class ProfileComponent implements OnInit {
   localAvatarOptions = [
     '/images/drivers/sai_kiran.png',
     '/images/drivers/venkatesh_reddy.png',
-    '/images/drivers/mahesh_reddy.png',
     '/images/drivers/ravi_teja.png',
-    'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
-    'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=150',
-    'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150',
-    'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150'
+    '/images/drivers/mahesh_reddy.png',
+    '/images/drivers/anand_kumar.png',
+    '/images/drivers/suresh_babu.png'
   ];
 
   constructor(
@@ -556,7 +554,7 @@ export class ProfileComponent implements OnInit {
 
   onLogout() {
     this.mockApi.logout().subscribe(() => {
-      this.router.navigate(['/login']);
+      this.router.navigate(['/login'], { replaceUrl: true });
     });
   }
 }

@@ -45,7 +45,7 @@ import * as L from 'leaflet';
             
             <!-- Driver quick details -->
             <div class="banner-driver-block bg-black bg-opacity-60 backdrop-blur-md p-3 rounded-xl border border-white border-opacity-10" style="background: rgba(0, 0, 0, 0.65); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 12px; display: flex; align-items: center; gap: 12px;">
-              <img [src]="vehicle()?.driverPhoto || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100'" alt="Driver Avatar" class="banner-driver-avatar" />
+              <img [src]="vehicle()?.driverPhoto || '/images/drivers/sai_kiran.png'" alt="Driver Avatar" class="banner-driver-avatar" />
               <div class="flex-col" style="display: flex; flex-direction: column;">
                 <span style="font-size: 0.65rem; color: #94a3b8; text-transform: uppercase; font-weight:600;">Assigned Operator</span>
                 <span class="text-sm font-bold text-white" style="font-size: 0.85rem; color: white; font-weight: 700; margin-top: 2px;">{{ vehicle()?.driverName || 'Depot Custodian' }}</span>

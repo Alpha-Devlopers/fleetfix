@@ -227,6 +227,11 @@ export class RegisterComponent implements OnInit {
   ) {}
 
   ngOnInit() {
+    if (this.mockApi.isAuthenticated()) {
+      this.router.navigate(['/dashboard']);
+      return;
+    }
+
     this.registerForm = this.fb.group({
       name: ['', [Validators.required]],
       email: ['', [Validators.required, Validators.email]],
@@ -257,8 +262,7 @@ export class RegisterComponent implements OnInit {
       this.mockApi.register(email, name, role, { phone, address, password }).subscribe({
         next: () => {
           this.isLoading.set(false);
-          alert('Registration successful! Please log in with your credentials.');
-          this.router.navigate(['/login']);
+          this.router.navigate(['/login'], { queryParams: { registered: 'true' } });
         },
         error: (err) => {
           this.isLoading.set(false);

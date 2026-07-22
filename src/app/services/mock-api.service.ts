@@ -150,6 +150,15 @@ export class MockApiService {
     ['garage@fleetfix.com', 'garage123']
   ]);
 
+  private readonly indianDriverAvatars = [
+    '/images/drivers/sai_kiran.png',
+    '/images/drivers/venkatesh_reddy.png',
+    '/images/drivers/ravi_teja.png',
+    '/images/drivers/mahesh_reddy.png',
+    '/images/drivers/anand_kumar.png',
+    '/images/drivers/suresh_babu.png'
+  ];
+
   // --- Image Pools ---
   private readonly uniquePortraits = [
     'photo-1607990283143-e81e7a2c93ab', 'photo-1624561172888-ac93c696e10c', 'photo-1615813967515-e1838c1c5116',
@@ -256,16 +265,19 @@ export class MockApiService {
     this.loadUsers();
     this.loadPasswords();
 
-    // Restore JWT session on start
+    // Restore JWT session on start if token exists and is valid
     const token = localStorage.getItem('jwt_token');
-    if (token) {
-      const email = localStorage.getItem('jwt_user_email') || '';
+    const expiryStr = localStorage.getItem('jwt_token_expiry');
+    const email = localStorage.getItem('jwt_user_email') || '';
+    if (token && expiryStr && email && Date.now() < parseInt(expiryStr, 10)) {
       const user = this.loadUsers().find(u => u.email.toLowerCase() === email.toLowerCase());
       if (user) {
         this.currentUserSubject.next(user);
       } else {
-        this.logout().subscribe();
+        this.logoutSync();
       }
+    } else {
+      this.logoutSync();
     }
 
     // Movement Simulation
@@ -329,16 +341,18 @@ export class MockApiService {
       this.adminUsers.push(`${this.getRandomItem(this.indianFirstNames)} ${this.getRandomItem(this.indianLastNames)}`);
     }
 
-    // 4. Generate 4 Drivers with unique realistic portrait photos
+    // 4. Generate Drivers with unique realistic AP & Telangana portrait photos
     const driversList: Driver[] = [];
     const driverDetails = [
       { id: 'd-201', name: 'Sai Kiran', phone: '+91 9012345678', avatarUrl: '/images/drivers/sai_kiran.png', status: 'On Trip' as const, rating: 4.8 },
       { id: 'd-202', name: 'Venkatesh Reddy', phone: '+91 9876543210', avatarUrl: '/images/drivers/venkatesh_reddy.png', status: 'On Trip' as const, rating: 4.6 },
       { id: 'd-203', name: 'Ravi Teja', phone: '+91 9345678901', avatarUrl: '/images/drivers/ravi_teja.png', status: 'Off Duty' as const, rating: 4.2 },
-      { id: 'd-204', name: 'Mahesh Reddy', phone: '+91 9988776655', avatarUrl: '/images/drivers/mahesh_reddy.png', status: 'On Trip' as const, rating: 4.9 }
+      { id: 'd-204', name: 'Mahesh Reddy', phone: '+91 9988776655', avatarUrl: '/images/drivers/mahesh_reddy.png', status: 'On Trip' as const, rating: 4.9 },
+      { id: 'd-205', name: 'Anand Kumar', phone: '+91 9123456789', avatarUrl: '/images/drivers/anand_kumar.png', status: 'Available' as const, rating: 4.7 },
+      { id: 'd-206', name: 'Suresh Babu', phone: '+91 9543216789', avatarUrl: '/images/drivers/suresh_babu.png', status: 'On Trip' as const, rating: 4.5 }
     ];
 
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < driverDetails.length; i++) {
       const details = driverDetails[i];
       const licenseState = i % 2 === 0 ? 'AP' : 'TS';
       const experience = 5 + (i * 3);
@@ -352,7 +366,7 @@ export class MockApiService {
         salary: 28000 + (i * 4000), // INR
         status: details.status === 'On Trip' ? 'On Trip' : (details.status === 'Off Duty' ? 'Off Duty' : 'Available'),
         rating: details.rating,
-        joinDate: `2024-0${3 + i}-15`,
+        joinDate: `2024-0${(i % 5) + 1}-15`,
         avatarUrl: details.avatarUrl
       });
     }
@@ -667,13 +681,40 @@ export class MockApiService {
     localStorage.setItem('ff_otps', JSON.stringify(otps));
   }
 
+  // Check if session token exists and is valid
+  isAuthenticated(): boolean {
+    const token = localStorage.getItem('jwt_token');
+    const expiryStr = localStorage.getItem('jwt_token_expiry');
+    if (!token || !expiryStr) {
+      return false;
+    }
+    const expiry = parseInt(expiryStr, 10);
+    if (isNaN(expiry) || Date.now() > expiry) {
+      this.logoutSync();
+      return false;
+    }
+    return !!this.currentUserSubject.value;
+  }
+
+  // Synchronous session cleanup
+  logoutSync(): void {
+    localStorage.removeItem('jwt_token');
+    localStorage.removeItem('jwt_token_expiry');
+    localStorage.removeItem('jwt_user_id');
+    localStorage.removeItem('jwt_user_email');
+    localStorage.removeItem('jwt_user_name');
+    localStorage.removeItem('jwt_user_role');
+    localStorage.removeItem('jwt_user_avatar');
+    this.currentUserSubject.next(null);
+  }
+
   // --- Auth Actions ---
   login(email: string, password: string): Observable<User> {
     const users = this.loadUsers();
     const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
 
     if (!user) {
-      return throwError(() => new Error('Invalid Email: Provided email address does not exist in FleetFix database.'));
+      return throwError(() => new Error('Account Not Registered: The email address provided is not registered. Please create an account first.'));
     }
 
     const passwords = this.loadPasswords();
@@ -685,13 +726,17 @@ export class MockApiService {
       return throwError(() => new Error('Account Disabled: Your account has been suspended by the administrator.'));
     }
 
-    // Success login
-    localStorage.setItem('jwt_token', 'mock_jwt_token_' + Date.now());
+    // Success login: Store valid JWT token with 24-hour expiration
+    const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.' + btoa(JSON.stringify({ sub: user.id, email: user.email, role: user.role })) + '.' + Date.now();
+    const expiry = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
+
+    localStorage.setItem('jwt_token', token);
+    localStorage.setItem('jwt_token_expiry', expiry.toString());
     localStorage.setItem('jwt_user_id', user.id);
     localStorage.setItem('jwt_user_email', user.email);
     localStorage.setItem('jwt_user_name', user.name);
     localStorage.setItem('jwt_user_role', user.role);
-    localStorage.setItem('jwt_user_avatar', user.avatarUrl || '');
+    localStorage.setItem('jwt_user_avatar', user.avatarUrl || '/images/drivers/sai_kiran.png');
 
     this.currentUserSubject.next(user);
     return of(user).pipe(delay(this.delayTime));
@@ -702,11 +747,11 @@ export class MockApiService {
     
     // Check duplicates
     if (users.some(u => u.email.toLowerCase() === email.toLowerCase())) {
-      return throwError(() => new Error('Email Already Exists: A user with this email address is already registered.'));
+      return throwError(() => new Error('Account Already Exists: A user with this email address is already registered. Please log in directly.'));
     }
 
     if (additionalFields?.phone && users.some(u => u.phone === additionalFields.phone)) {
-      return throwError(() => new Error('Phone Number Already Exists: A user with this phone number is already registered.'));
+      return throwError(() => new Error('Phone Number Already Registered: A user with this mobile number already exists. Please log in instead.'));
     }
 
     // Create new active user
@@ -734,8 +779,7 @@ export class MockApiService {
   }
 
   logout(): Observable<boolean> {
-    localStorage.clear();
-    this.currentUserSubject.next(null);
+    this.logoutSync();
     return of(true);
   }
 
@@ -953,7 +997,7 @@ export class MockApiService {
       rating: 5.0,
       joinDate: new Date().toISOString().split('T')[0],
       status: 'Available',
-      avatarUrl: `https://images.unsplash.com/${this.uniquePortraits[Math.floor(Math.random() * this.uniquePortraits.length)]}?w=150&h=150&fit=crop&crop=face`
+      avatarUrl: this.indianDriverAvatars[this.drivers$.value.length % this.indianDriverAvatars.length]
     };
     this.drivers$.next([...this.drivers$.value, newDriver]);
     return of(newDriver).pipe(delay(this.delayTime));

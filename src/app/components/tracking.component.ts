@@ -39,7 +39,7 @@ import * as L from 'leaflet';
               </div>
               <!-- Driver info row -->
               <div class="mini-driver-row mt-1 flex items-center gap-2">
-                <img [src]="vehicle.driverPhoto || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=60'" alt="Driver" class="mini-driver-avatar" />
+                <img [src]="vehicle.driverPhoto || '/images/drivers/sai_kiran.png'" alt="Driver" class="mini-driver-avatar" />
                 <span class="text-xs text-muted truncate">{{ vehicle.driverName || 'Unassigned' }}</span>
               </div>
             </div>
@@ -346,7 +346,7 @@ export class TrackingComponent implements OnInit, AfterViewInit, OnDestroy {
           <h4 style="margin: 0 0 8px 0; font-weight: 700; font-size: 0.875rem; color: #ffffff; font-family: monospace;">${vehicle.plate}</h4>
           
           <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 8px;">
-            <img src="${vehicle.driverPhoto || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=60'}" style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover;" />
+            <img src="${vehicle.driverPhoto || '/images/drivers/sai_kiran.png'}" style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover;" />
             <div style="display: flex; flex-direction: column;">
               <span style="font-size: 0.725rem; color: #94a3b8; font-weight: 500;">Driver</span>
               <span style="font-size: 0.775rem; color: #e2e8f0; font-weight: 600;">${vehicle.driverName || 'Unassigned'}</span>

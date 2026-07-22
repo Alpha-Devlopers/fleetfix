@@ -30,7 +30,7 @@ import { MockApiService, FaultAlert, AIOrder, Vehicle } from '../services/mock-a
           </div>
         </div>
         <div class="flex items-center gap-3 bg-opacity-10 bg-white border border-white border-opacity-5 p-2 rounded-lg" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05);">
-          <img [src]="vehicle()?.driverPhoto || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=60'" alt="Driver" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;" />
+          <img [src]="vehicle()?.driverPhoto || '/images/drivers/sai_kiran.png'" alt="Driver" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;" />
           <div class="flex flex-col">
             <span class="text-xs text-muted" style="font-size: 0.65rem; text-transform: uppercase; font-weight:600;">Driver Operator</span>
             <span class="text-xs text-bold" style="color: var(--text-primary); font-size: 0.775rem;">{{ vehicle()?.driverName || 'Unassigned' }}</span>

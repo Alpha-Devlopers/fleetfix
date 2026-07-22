@@ -14,6 +14,7 @@ import { InventoryComponent } from './components/inventory.component';
 import { ReportsComponent } from './components/reports.component';
 import { SettingsComponent } from './components/settings.component';
 import { ProfileComponent } from './components/profile.component';
+import { authGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -21,6 +22,8 @@ export const routes: Routes = [
   {
     path: '',
     component: ShellComponent,
+    canActivate: [authGuard],
+    canActivateChild: [authGuard],
     children: [
       { path: 'dashboard', component: DashboardComponent },
       { path: 'vehicles', component: VehicleListComponent },

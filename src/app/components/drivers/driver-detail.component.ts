@@ -23,7 +23,7 @@ import { MockApiService, Driver, TripRecord } from '../../services/mock-api.serv
       <!-- Quick Info Cards -->
       <div class="grid-cols-4 mb-4">
         <div class="glass-card stat-tile text-center items-center justify-center">
-          <img [src]="driver()?.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100'" alt="Avatar" class="avatar-large" />
+          <img [src]="driver()?.avatarUrl || '/images/drivers/sai_kiran.png'" alt="Avatar" class="avatar-large" />
         </div>
         <div class="glass-card stat-tile">
           <span class="tile-label">Current Status</span>

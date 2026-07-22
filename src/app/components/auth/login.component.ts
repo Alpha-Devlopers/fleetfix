@@ -1,6 +1,6 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterModule } from '@angular/router';
+import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { MockApiService } from '../../services/mock-api.service';
 
@@ -17,6 +17,11 @@ import { MockApiService } from '../../services/mock-api.service';
         </div>
         
         <p class="auth-subtitle text-center mt-2">Sign in to manage your smart fleet</p>
+
+        <div class="auth-success-msg mb-4" *ngIf="successMessage()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          <span>{{ successMessage() }}</span>
+        </div>
 
         <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="auth-form mt-4">
           <div class="form-group">
@@ -131,6 +136,19 @@ import { MockApiService } from '../../services/mock-api.service';
       text-align: center;
     }
 
+    .auth-success-msg {
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: #34d399;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      justify-content: center;
+    }
+
     .spinner {
       width: 20px;
       height: 20px;
@@ -156,14 +174,25 @@ export class LoginComponent implements OnInit {
   loginForm!: FormGroup;
   isLoading = signal(false);
   errorMessage = signal<string | null>(null);
+  successMessage = signal<string | null>(null);
 
   constructor(
     private fb: FormBuilder,
     private router: Router,
+    private route: ActivatedRoute,
     private mockApi: MockApiService
   ) {}
 
   ngOnInit() {
+    if (this.mockApi.isAuthenticated()) {
+      this.router.navigate(['/dashboard']);
+      return;
+    }
+
+    if (this.route.snapshot.queryParams['registered'] === 'true') {
+      this.successMessage.set('Account registered successfully! Please sign in with your email and password.');
+    }
+
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]]

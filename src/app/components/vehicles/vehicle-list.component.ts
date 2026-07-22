@@ -65,7 +65,7 @@ import { MockApiService, Vehicle, Driver } from '../../services/mock-api.service
 
           <!-- Driver Profile Block -->
           <div class="driver-profile-block mb-3">
-            <img [src]="vehicle.driverPhoto || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100'" alt="Driver Avatar" class="driver-avatar-thumb" />
+            <img [src]="vehicle.driverPhoto || '/images/drivers/sai_kiran.png'" alt="Driver Avatar" class="driver-avatar-thumb" />
             <div class="driver-profile-info">
               <span class="driver-title-label">Assigned Driver</span>
               <span class="driver-name-val">{{ vehicle.driverName || 'Unassigned' }}</span>

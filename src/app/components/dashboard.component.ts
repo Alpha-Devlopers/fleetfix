@@ -14,7 +14,7 @@ import { Chart } from 'chart.js/auto';
       <!-- Personalized Welcome Banner -->
       <div class="glass-card welcome-banner mb-4" *ngIf="currentUser">
         <div class="welcome-content-wrapper">
-          <img [src]="currentUser.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100'" alt="User Avatar" class="welcome-avatar" />
+          <img [src]="currentUser.avatarUrl || '/images/drivers/sai_kiran.png'" alt="User Avatar" class="welcome-avatar" />
           <div class="welcome-text-details">
             <h2>Welcome, {{ currentUser.name }}</h2>
             <p class="role-desc">Role: <span class="role-highlight">{{ getRoleLabel(currentUser.role) }}</span> | System Status: Active</p>
@@ -198,7 +198,7 @@ import { Chart } from 'chart.js/auto';
               <div class="m-details">
                 <div class="m-title">{{ item.plate }} &bull; {{ item.model }}</div>
                 <div class="m-desc flex items-center gap-1 mt-1 text-xs text-muted">
-                  <img [src]="item.driverPhoto || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=60'" alt="Driver" style="width: 14px; height: 14px; border-radius: 50%; object-fit: cover;" />
+                  <img [src]="item.driverPhoto || '/images/drivers/sai_kiran.png'" alt="Driver" style="width: 14px; height: 14px; border-radius: 50%; object-fit: cover;" />
                   <span>Odo: {{ item.odometer | number }} km &bull; Operator: {{ item.driverName || 'Depot' }}</span>
                 </div>
               </div>

@@ -35,7 +35,7 @@ import { MockApiService, Driver, Vehicle } from '../../services/mock-api.service
     <div class="drivers-grid">
       <div class="glass-card driver-profile-card" *ngFor="let driver of filteredDrivers()">
         <div class="driver-card-header">
-          <img [src]="driver.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120'" alt="Avatar" class="driver-avatar" />
+          <img [src]="driver.avatarUrl || '/images/drivers/sai_kiran.png'" alt="Avatar" class="driver-avatar" />
           <div class="driver-header-text">
             <h3 class="mb-0">{{ driver.name }}</h3>
             <span class="badge mt-1" [ngClass]="getStatusBadgeClass(driver.status)">{{ driver.status }}</span>
