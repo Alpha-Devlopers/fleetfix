@@ -80,11 +80,10 @@ import { MockApiService } from '../../services/mock-api.service';
           </div>
 
           <div class="form-group mt-3">
-            <label class="form-label" for="role">Register As</label>
+            <label class="form-label" for="role">User Role</label>
             <select id="role" class="form-control" formControlName="role" [class.invalid]="isFieldInvalid('role')">
-              <option value="fleet-owner">Fleet Owner (Customer)</option>
-              <option value="service-center">Service Center (Shopkeeper)</option>
-              <option value="admin">Administrator (Admin)</option>
+              <option value="fleet-owner">Customer (Fleet Owner)</option>
+              <option value="service-center">Shopkeeper (Service Center)</option>
             </select>
           </div>
 
@@ -100,6 +99,21 @@ import { MockApiService } from '../../services/mock-api.service';
             />
             <div *ngIf="isFieldInvalid('password')" class="form-error">
               <span>Password must be at least 6 characters</span>
+            </div>
+          </div>
+
+          <div class="form-group mt-3">
+            <label class="form-label" for="confirmPassword">Confirm Password</label>
+            <input 
+              id="confirmPassword"
+              type="password" 
+              class="form-control" 
+              formControlName="confirmPassword"
+              placeholder="••••••••"
+              [class.invalid]="isFieldInvalid('confirmPassword') || registerForm.hasError('mismatch')"
+            />
+            <div *ngIf="isFieldInvalid('confirmPassword') || (registerForm.get('confirmPassword')?.touched && registerForm.hasError('mismatch'))" class="form-error">
+              <span>Passwords must match</span>
             </div>
           </div>
 
@@ -219,8 +233,14 @@ export class RegisterComponent implements OnInit {
       phone: ['', [Validators.required, Validators.pattern('^\\+?[0-9]{10,14}$')]],
       address: ['', [Validators.required]],
       role: ['fleet-owner', [Validators.required]],
-      password: ['', [Validators.required, Validators.minLength(6)]]
-    });
+      password: ['', [Validators.required, Validators.minLength(6)]],
+      confirmPassword: ['', [Validators.required]]
+    }, { validators: this.passwordMatchValidator });
+  }
+
+  passwordMatchValidator(g: FormGroup) {
+    return g.get('password')?.value === g.get('confirmPassword')?.value
+      ? null : { mismatch: true };
   }
 
   isFieldInvalid(field: string): boolean {
