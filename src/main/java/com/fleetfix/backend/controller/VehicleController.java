@@ -23,6 +23,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/vehicles")
+@CrossOrigin(origins = "*", maxAge = 3600)
 @RequiredArgsConstructor
 @Tag(name = "Vehicles", description = "Vehicle management endpoints")
 public class VehicleController {

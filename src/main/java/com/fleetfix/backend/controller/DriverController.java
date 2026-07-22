@@ -22,6 +22,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/drivers")
+@CrossOrigin(origins = "*", maxAge = 3600)
 @RequiredArgsConstructor
 @Tag(name = "Drivers", description = "Driver management endpoints")
 public class DriverController {

@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/diagnostics")
+@CrossOrigin(origins = "*", maxAge = 3600)
 @RequiredArgsConstructor
 @Tag(name = "Diagnostics", description = "Diagnostic Trouble Code (DTC) endpoints. DTCs are supplied by the frontend; no AI processing occurs here.")
 public class DiagnosticController {
