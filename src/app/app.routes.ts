@@ -1,9 +1,6 @@
 import { Routes } from '@angular/router';
 import { LoginComponent } from './components/auth/login.component';
 import { RegisterComponent } from './components/auth/register.component';
-import { ForgotPasswordComponent } from './components/auth/forgot-password.component';
-import { VerifyEmailComponent } from './components/auth/verify-email.component';
-import { VerifyOtpComponent } from './components/auth/verify-otp.component';
 import { ShellComponent } from './components/shell.component';
 import { DashboardComponent } from './components/dashboard.component';
 import { VehicleListComponent } from './components/vehicles/vehicle-list.component';
@@ -21,9 +18,6 @@ import { ProfileComponent } from './components/profile.component';
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
   { path: 'register', component: RegisterComponent },
-  { path: 'forgot-password', component: ForgotPasswordComponent },
-  { path: 'verify-email', component: VerifyEmailComponent },
-  { path: 'verify-otp', component: VerifyOtpComponent },
   {
     path: '',
     component: ShellComponent,

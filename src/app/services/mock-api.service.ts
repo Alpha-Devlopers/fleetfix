@@ -127,46 +127,6 @@ export interface Part {
   rackLocation: string;
 }
 
-export interface Garage {
-  id: string;
-  name: string;
-  ownerName: string;
-  email: string;
-  phone: string;
-  state: string;
-  district: string;
-  city: string;
-  pincode: string;
-  fullAddress: string;
-  mechanicsCount: number;
-  servicesOffered: string[];
-  workingHours: string;
-  capacity: number;
-  logoUrl?: string;
-  documentUrl?: string;
-  imageUrl?: string;
-  status: 'Pending' | 'Approved' | 'Rejected';
-  gstNo?: string;
-  businessRegNo?: string;
-}
-
-export interface Booking {
-  id: string;
-  vehicleId: string;
-  vehiclePlate: string;
-  vehicleModel: string;
-  garageId: string;
-  garageName: string;
-  customerName: string;
-  customerEmail: string;
-  serviceType: string;
-  date: string;
-  status: 'Pending' | 'Confirmed' | 'In Progress' | 'Completed' | 'Rejected';
-  assignedMechanic?: string;
-  notes?: string;
-  invoiceCost?: number;
-}
-
 export interface SupportTicket {
   id: string;
   subject: string;
@@ -176,17 +136,6 @@ export interface SupportTicket {
   status: 'Open' | 'In Progress' | 'Closed';
   customerName: string;
   customerEmail: string;
-}
-
-export interface Invoice {
-  id: string;
-  bookingId: string;
-  vehiclePlate: string;
-  customerName: string;
-  garageName: string;
-  date: string;
-  amount: number; // INR
-  status: 'Paid' | 'Unpaid';
 }
 
 @Injectable({
@@ -292,10 +241,7 @@ export class MockApiService {
   private parts$ = new BehaviorSubject<Part[]>([]);
 
   // Multi-Role Mock Databases
-  private garages$ = new BehaviorSubject<Garage[]>([]);
-  private bookings$ = new BehaviorSubject<Booking[]>([]);
   private tickets$ = new BehaviorSubject<SupportTicket[]>([]);
-  private invoices$ = new BehaviorSubject<Invoice[]>([]);
   private users$ = new BehaviorSubject<User[]>([]);
 
   // Generated Lists for validation
@@ -636,65 +582,9 @@ export class MockApiService {
       { id: 'p-405', name: 'Force Traveller Fuel Injector Nozzle', partNumber: 'FI-NOZ-FOR9', stock: 12, minThreshold: 5, price: 8900, rackLocation: 'C-08' }
     ]);
 
-    // 10. Generate 10 Garages / Service Centers
-    const garages: Garage[] = [];
-    const garageNames = ['Apex Service Hub', 'Sai Ram Motors', 'Balaji Garage & Spares', 'Maruti Truck Care', 'Jai Hind Logistics Care', 'Royal Indian Workshop', 'Chennai Fleet Works', 'Delhi Express Garage', 'Gujarat Cargo Center', 'Kolkata Heavy Repairs'];
-    const serviceList = ['Engine Tuning', 'Brake Calibration', 'AC Repair', 'Tire Alignment', 'Electrical Overhaul', 'Body Welding', 'Suspension Overhaul'];
-
-    for (let i = 0; i < 10; i++) {
-      const city = this.indianCities[i % this.indianCities.length];
-      const owner = `${this.getRandomItem(this.indianFirstNames)} ${this.getRandomItem(this.indianLastNames)}`;
-      garages.push({
-        id: `g-${100 + i}`,
-        name: garageNames[i],
-        ownerName: owner,
-        email: `garage${i + 1}@fleetfix.com`,
-        phone: `+91 ${9800000000 + i * 123456}`,
-        state: 'Maharashtra',
-        district: city.name,
-        city: city.name,
-        pincode: `4000${String(12 + i).padStart(2, '0')}`,
-        fullAddress: `Plot No. ${45 + i}, NH-8 Logistics Hub, ${city.name}`,
-        mechanicsCount: Math.floor(4 + Math.random() * 8),
-        servicesOffered: [this.getRandomItem(serviceList), this.getRandomItem(serviceList), 'General Overhaul'],
-        workingHours: '09:00 AM - 08:00 PM',
-        capacity: Math.floor(5 + Math.random() * 15),
-        status: i < 8 ? 'Approved' : 'Pending',
-        gstNo: `GSTIN27AAAAA111${i}Z9`,
-        businessRegNo: `REG-IN-MUM-${7700 + i}`,
-        logoUrl: `https://images.unsplash.com/photo-1563986768609-322da13575f3?w=100&h=100&fit=crop`,
-        imageUrl: `https://images.unsplash.com/photo-1506015391300-4802db74de2e?w=500&h=300&fit=crop`
-      });
-    }
-    this.garages$.next(garages);
-
-    // 11. Generate 25 Service Bookings
-    const bookings: Booking[] = [];
-    for (let i = 1; i <= 25; i++) {
-      const v = vehiclesList[i % vehiclesList.length];
-      const g = garages[i % garages.length];
-      bookings.push({
-        id: `b-${100 + i}`,
-        vehicleId: v.id,
-        vehiclePlate: v.plate,
-        vehicleModel: v.model,
-        garageId: g.id,
-        garageName: g.name,
-        customerName: 'Rahul Sharma (Fleet Owner)',
-        customerEmail: 'owner@fleetfix.com',
-        serviceType: this.getRandomItem(['General Checkup', 'Brake Overhaul', 'Oil Filter Change']),
-        date: `2026-07-2${i % 9}`,
-        status: i <= 8 ? 'Completed' : (i <= 15 ? 'In Progress' : 'Pending'),
-        assignedMechanic: this.getRandomItem(this.mechanics).name,
-        notes: 'Routine checks before next NH run.',
-        invoiceCost: 5500 + i * 850
-      });
-    }
-    this.bookings$.next(bookings);
-
-    // 12. Generate 10 Support Tickets
+    // 10. Generate 10 Support Tickets
     const tickets: SupportTicket[] = [];
-    const ticketSubjects = ['Vehicle GPS tracking latency', 'Incorrect maintenance alerts DTC', 'Invoice print download failing', 'Profile password reset OTP issue', 'Driver ratings not updating'];
+    const ticketSubjects = ['Vehicle GPS tracking latency', 'Incorrect maintenance alerts DTC', 'Driver ratings not updating'];
     for (let i = 1; i <= 10; i++) {
       tickets.push({
         id: `t-${100 + i}`,
@@ -709,24 +599,7 @@ export class MockApiService {
     }
     this.tickets$.next(tickets);
 
-    // 13. Generate 30 Invoices
-    const invoicesList: Invoice[] = [];
-    for (let i = 1; i <= 30; i++) {
-      const booking = bookings[i % bookings.length];
-      invoicesList.push({
-        id: `inv-${300 + i}`,
-        bookingId: booking.id,
-        vehiclePlate: booking.vehiclePlate,
-        customerName: booking.customerName,
-        garageName: booking.garageName,
-        date: `2026-07-1${i % 9}`,
-        amount: 8000 + i * 2300,
-        status: i < 20 ? 'Paid' : 'Unpaid'
-      });
-    }
-    this.invoices$.next(invoicesList);
-
-    // 14. Create initial mock users for authentication roles
+    // 11. Create initial mock users for authentication roles
     const users: User[] = [
       { id: 'user-admin', email: 'admin@fleetfix.com', name: 'Sarah Connor (Admin)', role: 'admin', notificationsEnabled: true, theme: 'glass', status: 'Active' },
       { id: 'user-owner', email: 'owner@fleetfix.com', name: 'Rahul Sharma (Owner)', role: 'fleet-owner', company: 'Blue Dart Logistics', phone: '+91 9876543210', notificationsEnabled: true, theme: 'glass', status: 'Active' },
@@ -812,11 +685,6 @@ export class MockApiService {
       return throwError(() => new Error('Account Disabled: Your account has been suspended by the administrator.'));
     }
 
-    if (user.status === 'Pending') {
-      localStorage.setItem('verification_email', user.email);
-      return throwError(() => new Error('Email Not Verified: Please verify your email OTP first.'));
-    }
-
     // Success login
     localStorage.setItem('jwt_token', 'mock_jwt_token_' + Date.now());
     localStorage.setItem('jwt_user_id', user.id);
@@ -841,7 +709,7 @@ export class MockApiService {
       return throwError(() => new Error('Phone Number Already Exists: A user with this phone number is already registered.'));
     }
 
-    // Create new pending user
+    // Create new active user
     const newUser: User = {
       id: `user-${Date.now().toString().slice(-4)}`,
       email,
@@ -852,7 +720,7 @@ export class MockApiService {
       avatarUrl: '/images/drivers/sai_kiran.png',
       notificationsEnabled: true,
       theme: 'glass',
-      status: 'Pending'
+      status: 'Active'
     };
 
     users.push(newUser);
@@ -861,125 +729,6 @@ export class MockApiService {
     const passwords = this.loadPasswords();
     passwords[email.toLowerCase()] = this.hashPassword(additionalFields?.password || '');
     this.savePasswords(passwords);
-
-    localStorage.setItem('verification_email', email);
-
-    // Generate active 6-digit OTP in localStorage
-    this.sendMockOtp(email);
-
-    return of(true).pipe(delay(this.delayTime));
-  }
-
-  private sendMockOtp(email: string): string {
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiry = Date.now() + 15 * 60 * 1000; // 15 mins
-
-    const otps = this.loadOtps();
-    otps[email.toLowerCase()] = { code, expiry };
-    this.saveOtps(otps);
-    return code;
-  }
-
-  getDevOtp(email?: string): Observable<string> {
-    const targetEmail = email || localStorage.getItem('verification_email') || localStorage.getItem('reset_email') || '';
-    if (!targetEmail) {
-      return throwError(() => new Error('No active email context found.'));
-    }
-    const otps = this.loadOtps();
-    const entry = otps[targetEmail.toLowerCase()];
-    if (entry && entry.code) {
-      return of(entry.code);
-    }
-    const newCode = this.sendMockOtp(targetEmail);
-    return of(newCode);
-  }
-
-  resendOtp(email?: string): Observable<boolean> {
-    const targetEmail = email || localStorage.getItem('verification_email') || localStorage.getItem('reset_email') || '';
-    if (!targetEmail) {
-      return throwError(() => new Error('Email context missing.'));
-    }
-    this.sendMockOtp(targetEmail);
-    return of(true).pipe(delay(this.delayTime));
-  }
-
-  forgotPassword(email: string): Observable<boolean> {
-    const users = this.loadUsers();
-    const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
-
-    if (!user) {
-      return throwError(() => new Error('Invalid Email: Provided email address does not exist.'));
-    }
-
-    localStorage.setItem('reset_email', email);
-    this.sendMockOtp(email);
-    return of(true).pipe(delay(this.delayTime));
-  }
-
-  verifyEmail(code: string): Observable<boolean> {
-    const email = localStorage.getItem('verification_email') || '';
-    if (!email) {
-      return throwError(() => new Error('Session Expired: Verification email context is missing.'));
-    }
-
-    const otps = this.loadOtps();
-    const entry = otps[email.toLowerCase()];
-
-    if (!entry || entry.code !== code || Date.now() > entry.expiry) {
-      return throwError(() => new Error('Invalid OTP: The verification code is incorrect or expired.'));
-    }
-
-    // Activate user
-    const users = this.loadUsers();
-    const idx = users.findIndex(u => u.email.toLowerCase() === email.toLowerCase());
-    if (idx !== -1) {
-      users[idx].status = 'Active';
-      this.saveUsers(users);
-    }
-
-    localStorage.removeItem('verification_email');
-    delete otps[email.toLowerCase()];
-    this.saveOtps(otps);
-
-    return of(true).pipe(delay(this.delayTime));
-  }
-
-  verifyOtp(code: string): Observable<boolean> {
-    const email = localStorage.getItem('reset_email') || '';
-    if (!email) {
-      return throwError(() => new Error('Session Expired: Reset email context is missing.'));
-    }
-
-    const otps = this.loadOtps();
-    const entry = otps[email.toLowerCase()];
-
-    if (!entry || entry.code !== code || Date.now() > entry.expiry) {
-      return throwError(() => new Error('Invalid OTP: The verification code is incorrect or expired.'));
-    }
-
-    return of(true).pipe(delay(this.delayTime));
-  }
-
-  resetPassword(otp: string, newPassword: string): Observable<boolean> {
-    const email = localStorage.getItem('reset_email') || '';
-    if (!email) {
-      return throwError(() => new Error('Session Expired: Reset email context is missing.'));
-    }
-
-    const otps = this.loadOtps();
-    const entry = otps[email.toLowerCase()];
-
-    if (!entry || entry.code !== otp || Date.now() > entry.expiry) {
-      return throwError(() => new Error('Invalid OTP: The verification code is incorrect or expired.'));
-    }
-
-    const passwords = this.loadPasswords();
-    passwords[email.toLowerCase()] = this.hashPassword(newPassword);
-    this.savePasswords(passwords);
-
-    localStorage.removeItem('reset_email');
-    delete otps[email.toLowerCase()];
-    this.saveOtps(otps);
 
     return of(true).pipe(delay(this.delayTime));
   }
@@ -1059,96 +808,6 @@ export class MockApiService {
     return throwError(() => new Error('No logged-in user'));
   }
 
-  // --- Garages / Service Centers ---
-  getGarages(): Observable<Garage[]> {
-    return this.garages$.asObservable().pipe(delay(this.delayTime));
-  }
-
-  approveGarage(garageId: string): Observable<boolean> {
-    const gList = [...this.garages$.value];
-    const idx = gList.findIndex(g => g.id === garageId);
-    if (idx !== -1) {
-      gList[idx].status = 'Approved';
-      this.garages$.next(gList);
-
-      // Also approve the linked user account status so they can log in!
-      const uList = [...this.users$.value];
-      const uIdx = uList.findIndex(u => u.email.toLowerCase() === gList[idx].email.toLowerCase());
-      if (uIdx !== -1) {
-        uList[uIdx].status = 'Active';
-        this.users$.next(uList);
-      }
-      return of(true).pipe(delay(150));
-    }
-    return throwError(() => new Error('Garage not found'));
-  }
-
-  rejectGarage(garageId: string): Observable<boolean> {
-    const gList = [...this.garages$.value];
-    const idx = gList.findIndex(g => g.id === garageId);
-    if (idx !== -1) {
-      gList[idx].status = 'Rejected';
-      this.garages$.next(gList);
-      return of(true).pipe(delay(150));
-    }
-    return throwError(() => new Error('Garage not found'));
-  }
-
-  // --- Bookings ---
-  getBookings(): Observable<Booking[]> {
-    return this.bookings$.asObservable().pipe(delay(this.delayTime));
-  }
-
-  addBooking(booking: Omit<Booking, 'id' | 'status'>): Observable<Booking> {
-    const newBooking: Booking = {
-      ...booking,
-      id: `b-${Date.now().toString().slice(-4)}`,
-      status: 'Pending'
-    };
-    this.bookings$.next([newBooking, ...this.bookings$.value]);
-    return of(newBooking).pipe(delay(this.delayTime));
-  }
-
-  updateBookingStatus(bookingId: string, status: Booking['status'], mechanic?: string, cost?: number): Observable<Booking> {
-    const list = [...this.bookings$.value];
-    const idx = list.findIndex(b => b.id === bookingId);
-    if (idx !== -1) {
-      list[idx].status = status;
-      if (mechanic) list[idx].assignedMechanic = mechanic;
-      if (cost) list[idx].invoiceCost = cost;
-      
-      // If completed, add invoice and service history log dynamically!
-      if (status === 'Completed') {
-        const finished = list[idx];
-        const newInvoice: Invoice = {
-          id: `inv-${Date.now().toString().slice(-4)}`,
-          bookingId: finished.id,
-          vehiclePlate: finished.vehiclePlate,
-          customerName: finished.customerName,
-          garageName: finished.garageName,
-          date: new Date().toISOString().split('T')[0],
-          amount: cost || 8500,
-          status: 'Unpaid'
-        };
-        this.invoices$.next([newInvoice, ...this.invoices$.value]);
-
-        const record: ServiceRecord = {
-          id: `sr-${Date.now().toString().slice(-4)}`,
-          vehicleId: finished.vehicleId,
-          date: finished.date,
-          description: finished.serviceType,
-          cost: cost || 8500,
-          mechanic: `${mechanic || 'Technician'} (${finished.garageName})`
-        };
-        this.serviceRecords$.next([record, ...this.serviceRecords$.value]);
-      }
-
-      this.bookings$.next(list);
-      return of(list[idx]).pipe(delay(150));
-    }
-    return throwError(() => new Error('Booking not found'));
-  }
-
   // --- Support Tickets ---
   getSupportTickets(): Observable<SupportTicket[]> {
     return this.tickets$.asObservable().pipe(delay(this.delayTime));
@@ -1163,22 +822,6 @@ export class MockApiService {
     };
     this.tickets$.next([newTicket, ...this.tickets$.value]);
     return of(newTicket).pipe(delay(this.delayTime));
-  }
-
-  // --- Invoices ---
-  getInvoices(): Observable<Invoice[]> {
-    return this.invoices$.asObservable().pipe(delay(this.delayTime));
-  }
-
-  payInvoice(invoiceId: string): Observable<boolean> {
-    const list = [...this.invoices$.value];
-    const idx = list.findIndex(i => i.id === invoiceId);
-    if (idx !== -1) {
-      list[idx].status = 'Paid';
-      this.invoices$.next(list);
-      return of(true).pipe(delay(150));
-    }
-    return of(false);
   }
 
   // --- System Users lists for Admins ---

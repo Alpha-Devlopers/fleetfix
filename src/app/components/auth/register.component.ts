@@ -237,8 +237,8 @@ export class RegisterComponent implements OnInit {
       this.mockApi.register(email, name, role, { phone, address, password }).subscribe({
         next: () => {
           this.isLoading.set(false);
-          alert('Registration successful! A verification code has been dispatched to your email address.');
-          this.router.navigate(['/verify-email']);
+          alert('Registration successful! Please log in with your credentials.');
+          this.router.navigate(['/login']);
         },
         error: (err) => {
           this.isLoading.set(false);

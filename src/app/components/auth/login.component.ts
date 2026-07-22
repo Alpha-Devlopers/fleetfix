@@ -36,10 +36,7 @@ import { MockApiService } from '../../services/mock-api.service';
           </div>
 
           <div class="form-group">
-            <div class="flex justify-between items-center mb-1">
-              <label class="form-label mb-0" for="password">Password</label>
-              <a routerLink="/forgot-password" class="forgot-link">Forgot?</a>
-            </div>
+            <label class="form-label mb-1" for="password">Password</label>
             <input 
               id="password"
               type="password" 
@@ -116,14 +113,6 @@ import { MockApiService } from '../../services/mock-api.service';
       color: var(--text-secondary);
       font-size: 0.9rem;
       margin-bottom: 24px;
-    }
-    
-    .forgot-link {
-      font-size: 0.8rem;
-      color: var(--text-secondary);
-      &:hover {
-        color: var(--color-primary);
-      }
     }
     
     .form-control.invalid {

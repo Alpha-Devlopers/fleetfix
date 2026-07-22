@@ -34,7 +34,7 @@ import { RouterModule } from '@angular/router';
             <div class="role-text flex-1">
               <h3 class="text-bold text-white mb-2">Fleet Owner Portal</h3>
               <p class="text-secondary text-sm leading-relaxed">
-                Register vehicles, monitor live GPS corridors, inspect engine diagnostics, review AI procedures, and schedule workshop bookings.
+                Register vehicles, monitor live GPS corridors, inspect engine diagnostics, track drivers, and review AI repair procedures.
               </p>
             </div>
             <div class="role-actions flex-col gap-2 mt-4">
@@ -55,7 +55,7 @@ import { RouterModule } from '@angular/router';
             <div class="role-text flex-1">
               <h3 class="text-bold text-white mb-2">Service Center Portal</h3>
               <p class="text-secondary text-sm leading-relaxed">
-                Approve service bookings, manage mechanics workload, manage parts inventory, clear DTCs, and invoice fleet owners.
+                Manage repair orders, inspect AI diagnostic procedures, clear DTCs, and track spare parts inventory.
               </p>
             </div>
             <div class="role-actions flex-col gap-2 mt-4">
@@ -76,7 +76,7 @@ import { RouterModule } from '@angular/router';
             <div class="role-text flex-1">
               <h3 class="text-bold text-white mb-2">Admin Console</h3>
               <p class="text-secondary text-sm leading-relaxed">
-                Approve pending garages, configure system telemetry parameters, manage fleet inventories, audit logs, and inspect metrics.
+                Configure system telemetry parameters, manage fleet inventories, audit system logs, and inspect performance metrics.
               </p>
             </div>
             <div class="role-actions flex-col gap-2 mt-4">
